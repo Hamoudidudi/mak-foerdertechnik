@@ -1,0 +1,314 @@
+/* ===========================
+   Tailwind v4 + Content-Quellen (Datei liegt in src/app/)
+   =========================== */
+@import "tailwindcss";
+@source "./**/*.{js,ts,jsx,tsx,mdx}";
+@source "../components/**/*.{js,ts,jsx,tsx,mdx}";
+
+/* ===========================
+   Layout-Variablen (Header/Subnav-Offsets)
+   =========================== */
+:root {
+    --header-h: 64px;    /* Desktop-Header-Höhe (Fallback) */
+    --subnav-h: 52px;    /* optionale Subnav-Höhe (Fallback) */
+    --hero-gap: 20px;    /* Abstand vom Header zum Hero-Content */
+}
+@media (max-width: 767.98px) {
+    :root { --header-h: 56px; } /* Mobile-Header (Fallback) */
+}
+
+/* Hilfsklassen: Anker-Offset & kompakter Hero-Start */
+.anchor-offset { scroll-margin-top: calc(var(--header-h) + var(--subnav-h) + 12px); }
+.hero-tight { padding-top: calc(var(--header-h) + var(--hero-gap)); }
+.sticky-subnav { position: sticky; top: var(--header-h); z-index: 40; backdrop-filter: blur(8px); }
+
+/* ===========================
+   Base / Reset
+   =========================== */
+html, body { height: 100%; }
+html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+}
+body { background-color: #F9FAFB; color: #111827; }
+a { text-underline-offset: 2px; }
+a:hover { text-decoration: underline; }
+
+/* ===========================
+   Reusable UI Utilities
+   =========================== */
+.pill { @apply inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-700 transition; }
+.pill:is(:hover, :focus-visible) {
+    background: var(--tint-bg);
+    color: #111827;
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent-400) 45%, transparent);
+    border-color: var(--tint-border);
+}
+.pill.is-active {
+    background: var(--tint-bg);
+    color: #111827;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent-400) 45%, transparent);
+    border-color: var(--tint-border);
+}
+
+.dotted { background-image: radial-gradient(theme(colors.slate.300) 1px, transparent 1px); background-size: 8px 8px; }
+
+.card-hover { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.06); border-color: rgb(226 232 240); /* slate-200 */ }
+
+/* ===========================
+   HERO SLIDESHOW – Standard (wie am Anfang)
+   =========================== */
+
+/* sanfter Ken-Burns */
+@keyframes heroKB { 0%{transform:scale(1)} 50%{transform:scale(1.045)} 100%{transform:scale(1)} }
+
+/* Slide-Container hinter dem Inhalt */
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    /* keine globalen Filter mehr */
+    will-change: opacity, transform;
+}
+
+/* einzelne Slides (Crossfade) */
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 900ms ease;
+    background-size: cover;
+    background-position: center;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: opacity, transform;
+    contain: paint;
+    z-index: 0;
+
+    /* 🔙 wieder der ursprüngliche, lebendige Look */
+    filter: saturate(1.05) contrast(1.02);
+}
+
+/* aktive Slide sichtbar */
+.hero-slide.is-active { opacity: 1; z-index: 1; }
+
+/* optionaler Ken-Burns (dezent) */
+.hero-slide.kb { animation: heroKB 16s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-slide { transition: none; animation: none !important; }
+}
+
+
+/* Variant: NEUTRAL (nicht zu hell, wenig Farbe)
+   -> am Hero-Wrapper verwenden: class="hero-neutral"
+*/
+.hero-neutral .hero-slide{
+    filter:
+            grayscale(100%)    /* wenig Farbe, aber nicht komplett grau */
+            saturate(0.72)    /* leichte Entsättigung */
+            brightness(0.98)  /* minimal dunkler -> Text wirkt klarer */
+            contrast(1.03);   /* etwas Mikrokontrast */
+}
+/* Feintuning (optional) – am Wrapper ergänzen */
+.hero-neutral-darker  .hero-slide { filter: grayscale(88%) saturate(0.70) brightness(0.96) contrast(1.04); }
+.hero-neutral-lighter .hero-slide { filter: grayscale(82%) saturate(0.78) brightness(1.02) contrast(1.02); }
+
+/* sehr dezenter Hintergrundverlauf im Hero (falls genutzt) */
+.hero-gradient{
+    background:
+            radial-gradient(900px 420px at 12% -10%, color-mix(in oklab, var(--accent-300) 12%, transparent) 0%, transparent 70%),
+            radial-gradient(700px 360px at 100% 0%, color-mix(in oklab, var(--accent-400) 9%, transparent) 0%, transparent 72%);
+}
+
+/* ===========================
+   ✅ Marquee – nahtlos, rand-zu-rand
+   =========================== */
+.marq {
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    overflow: hidden; width: 100%; height: 48px;
+    background: #f8fafc;
+    border-top: 1px solid rgba(2,6,23,.08);
+    border-bottom: 1px solid rgba(2,6,23,.08);
+}
+.marq__lane { display: flex; align-items: center; gap: 40px; padding: 0 24px; white-space: nowrap; will-change: transform; }
+.marq__lane--a { animation: marq-left 24s linear infinite; }
+.marq__lane--b { animation: marq-left-2 24s linear infinite; }
+.marq[data-dir="right"] .marq__lane--a { animation-name: marq-right; }
+.marq[data-dir="right"] .marq__lane--b { animation-name: marq-right-2; }
+
+@keyframes marq-left   { from { transform: translateX(0);     } to { transform: translateX(-100%);} }
+@keyframes marq-left-2 { from { transform: translateX(100%);  } to { transform: translateX(0);    } }
+@keyframes marq-right  { from { transform: translateX(-100%); } to { transform: translateX(0);    } }
+@keyframes marq-right-2{ from { transform: translateX(0);     } to { transform: translateX(100%); } }
+
+/* Farbig, hochwertig & dezent – mit heller Kontur */
+.marq__dot{
+    width: 6px; height: 6px; border-radius: 999px; flex-shrink: 0;
+    background-image: linear-gradient(135deg, #0ea5a4, #22d3ee 45%, #3b82f6 90%);
+    box-shadow: 0 0 0 2px rgba(255,255,255,.85);
+    transition: filter .2s ease;
+}
+/* ruhige Variation */
+.marq__lane .marq__dot:nth-of-type(4n+1){ background-image: linear-gradient(135deg, #0ea5a4, #22c55e); }
+.marq__lane .marq__dot:nth-of-type(4n+2){ background-image: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+.marq__lane .marq__dot:nth-of-type(4n+3){ background-image: linear-gradient(135deg, #f59e0b, #f97316); }
+.marq__lane .marq__dot:nth-of-type(4n+4){ background-image: linear-gradient(135deg, #06b6d4, #14b8a6); }
+/* leichte Reaktion */
+.marq:is(:hover, :focus-within) .marq__dot{ filter: brightness(1.05); }
+
+@media (prefers-reduced-motion: reduce) { .marq__lane--a, .marq__lane--b { animation: none !important; } }
+
+/* ===========================
+   Brand Themes – Tokens
+   (Ocean = Default, plus Sand, Forest, Rose, Slate)
+   =========================== */
+:root {
+    /* Primärfarben (Fallbacks) */
+    --accent-700: #0a3a5a;
+    --accent-600: #0f4d78;
+    --accent-500: #1566a3;
+    --accent-400: #1f87d6;
+    --accent-300: #6cb7f2;
+
+    /* Tints für Badges/Focus/Hover */
+    --tint-bg: #e6f4fd;
+    --tint-text: #0b4c74;
+    --tint-border: #b9e0fb;
+
+    /* High-Visibility CTA – Amber */
+    --cta-back-bg-1: #fbbf24;
+    --cta-back-bg-2: #f59e0b;
+    --cta-back-text: #0b0f19;
+    --cta-back-border: rgba(245,158,11,.45);
+    --cta-back-glow: rgba(251,191,36,.35);
+}
+
+/* Ocean (bestehend) */
+[data-theme="ocean"] {
+    --accent-700:#0a3a5a; --accent-600:#0f4d78; --accent-500:#1566a3; --accent-400:#1f87d6; --accent-300:#6cb7f2;
+    --tint-bg:#e6f4fd; --tint-text:#0b4c74; --tint-border:#b9e0fb;
+}
+
+/* Sand – warme, angenehme Beige/Amber-Töne */
+[data-theme="sand"] {
+    --accent-700:#7a4a11; --accent-600:#965f16; --accent-500:#b87a1f; --accent-400:#e0a64a; --accent-300:#f3d39c;
+    --tint-bg:#fff7e8; --tint-text:#7a4a11; --tint-border:#fde4b9;
+}
+
+/* Forest – ruhige Grün/Mint-Töne */
+[data-theme="forest"] {
+    --accent-700:#0f3d2e; --accent-600:#145a42; --accent-500:#1e7a59; --accent-400:#2fb17e; --accent-300:#93e1c0;
+    --tint-bg:#e9fbf3; --tint-text:#145a42; --tint-border:#c5f2df;
+}
+
+/* Rose – freundliche Coral/Rose-Töne */
+[data-theme="rose"] {
+    --accent-700:#7a1f2f; --accent-600:#a12c41; --accent-500:#c83c56; --accent-400:#f0627d; --accent-300:#f7b4c0;
+    --tint-bg:#fff0f3; --tint-text:#7a1f2f; --tint-border:#ffd1db;
+}
+
+/* Slate – seriös mit leichtem Violett */
+[data-theme="slate"] {
+    --accent-700:#2e225f; --accent-600:#3b2f7c; --accent-500:#4b3ea3; --accent-400:#6a60d6; --accent-300:#b2acf2;
+    --tint-bg:#f1efff; --tint-text:#3b2f7c; --tint-border:#d7d3ff;
+}
+
+/* ===========================
+   THEME UTILITIES (nutzen Variablen)
+   =========================== */
+.badge-accent {
+    background: var(--tint-bg);
+    color: var(--tint-text);
+    border: 1px solid var(--tint-border);
+    border-radius: 999px;
+    padding: 0.25rem 0.5rem; /* ≈ px-2 py-1 */
+    font-size: 0.75rem;     /* text-xs */
+    font-weight: 600;
+    display: inline-flex; align-items: center; gap: .4rem;
+}
+
+.accent-bar {
+    height: 4px; width: 7rem; border-radius: 999px;
+    background-image: linear-gradient(90deg, var(--accent-400), var(--accent-300), var(--accent-500));
+    background-size: 200% 100%; transition: background-position .7s ease;
+}
+.accent-bar:hover { background-position: 100% 0; }
+
+/* Primärer CTA */
+.btn-primary {
+    background-image: linear-gradient(90deg, var(--accent-600), var(--accent-400));
+    color: #fff; border-radius: .75rem; padding: .5rem .75rem;
+    display: inline-flex; align-items: center; gap: .5rem;
+    transition: filter .2s ease, transform .2s ease;
+}
+.btn-primary:hover { filter: brightness(1.07); text-decoration: none; }
+.btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent-400) 45%, transparent); }
+
+/* High-Visibility CTA „Zurück“ – Amber */
+.btn-back {
+    border: 1px solid var(--cta-back-border);
+    background: linear-gradient(135deg, var(--cta-back-bg-1), var(--cta-back-bg-2));
+    color: var(--cta-back-text);
+    border-radius: .75rem; padding: .5rem .75rem;
+    display: inline-flex; align-items: center; gap: .5rem;
+    text-decoration: none;
+    box-shadow:
+            0 1px 0 rgba(0,0,0,.04),
+            0 0 0 1px rgba(255,255,255,.45) inset,
+            0 4px 16px rgba(245, 158, 11, .18);
+    transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
+}
+.btn-back:hover { filter: brightness(1.05); text-decoration: none; }
+.btn-back:active { transform: translateY(1px); }
+.btn-back:focus-visible {
+    outline: none;
+    box-shadow:
+            0 0 0 4px var(--cta-back-glow),
+            0 1px 0 rgba(0,0,0,.04),
+            0 0 0 1px rgba(255,255,255,.45) inset;
+}
+
+/* Schmale Marken-Ribbon (z. B. Card-Trenner) */
+.ribbon { height: 4px; width: 100%;
+    background-image: linear-gradient(90deg, var(--accent-500), var(--accent-400), var(--accent-300));
+}
+
+/* ===========================
+   Sanfte Ränder/Container-Hilfen (optional)
+   =========================== */
+.container-narrow { max-width: 64rem; margin-inline: auto; padding-inline: 1rem; }
+.container-wide   { max-width: 80rem; margin-inline: auto; padding-inline: 1rem; }
+
+
+
+
+
+
+
+/* ========== Animated Gradient Text (warm/amber) ========== */
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+.text-gradient-slow {
+    background-image: linear-gradient(
+            90deg,
+            #6104fa,   /* warm dunkel (sand-700) */ #310977 45%,
+            #6151e3 /* warm hell (sand-400) */
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradientShift 12s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .text-gradient-slow { animation: none; }
+}
+
