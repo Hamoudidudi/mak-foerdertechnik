@@ -186,13 +186,13 @@ export default function AboutPage() {
                             {
                                 name: 'Gafora',
                                 role: 'Leitung Service',
-                                img: '/team/gafora.jpg',
+                                img: '/team/g.jpg',
                                 quote: 'Zuverlässig für unsere Kunden',
                             },
                             {
                                 name: 'Mohamed',
                                 role: 'Projektmanagement',
-                                img: '/team/dud.jpg',
+                                img: '/team/w.jpg',
                                 quote: 'Qualität von Anfang an',
                             },
                         ].map((p, i) => (
